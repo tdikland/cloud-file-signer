@@ -1,7 +1,10 @@
+use std::fmt::{Display, Formatter};
+
 pub mod aws;
 pub mod azure;
 pub mod gcp;
 
+#[derive(Debug)]
 pub struct PresignedUrl {
     url: String,
     expires: String,
@@ -21,7 +24,16 @@ impl PresignedUrl {
     }
 }
 
+#[derive(Debug)]
 pub struct SignerError;
+
+impl Display for SignerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "SignerError")
+    }
+}
+
+impl std::error::Error for SignerError {}
 
 #[async_trait::async_trait]
 pub trait CloudFileSigner {
