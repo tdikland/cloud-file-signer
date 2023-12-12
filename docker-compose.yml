@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  aws-mock:
+    image: localstack/localstack:stable
+    ports:
+      - '4566:4566'
+      - '4510-4559:4510-4559'
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - TEST_AWS_ACCESS_KEY_ID=delta-sharing
+      - TEST_AWS_SECRET_ACCESS_KEY=sharing-is-caring
+      - S3_SKIP_SIGNATURE_VALIDATION=0
+
+  # fake-gcs:
+  #   # Custom image - see fsouza/fake-gcs-server#1164
+  #   image: tustvold/fake-gcs-server
+  #   command: ["-scheme", "http", "-public-host", "localhost:4443", "-backend", "memory"]
+  #   ports:
+  #     - 4443:4443
+
+  # azurite:
+  #   image: mcr.microsoft.com/azure-storage/azurite
+  #   ports:
+  #     - 10000:10000

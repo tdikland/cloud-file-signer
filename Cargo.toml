@@ -6,12 +6,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.35.0", features = ["full"] }
 async-trait = "0.1.74"
+aws-config = { version = "1.0.3", features = ["behavior-version-latest"] }
+aws-credential-types = {version="1.0.3", features = ["hardcoded-credentials"]}
+aws-sdk-s3 = { version = "1.5.0", features = ["behavior-version-latest"] }
+reqwest = { version = "0.11.22", features = ["blocking"] }
 time = { version = "0.3.30", features = ["local-offset"] }
-aws-sdk-s3 = "1.5.0"
 azure_core = "0.17.0"
 azure_storage = "0.17.0"
 azure_storage_blobs = "0.17.0"
+http = "1.0.0"
+
 
 [dev-dependencies]
+reqwest = { version = "0.11.22", features = ["blocking"] }
+tokio = { version = "1.35.0", features = ["full"] }

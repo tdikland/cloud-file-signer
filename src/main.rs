@@ -5,20 +5,18 @@ use azure_core::error::{ErrorKind, ResultExt};
 use azure_storage::{prelude::*, shared_access_signature};
 use azure_storage_blobs::prelude::*;
 
-
-#[tokio::main]
-async fn main() {
+fn main() {
     let cb = ClientBuilder::emulator();
 
     // let container_client = cb.clone().container_client("container1");
     // container_client.create().into_future().await.unwrap();
 
-    let blob_client = cb.clone().blob_client("container1", "blob2");
-    blob_client.put_block_blob("hello world2").await.unwrap();
+    // let blob_client = cb.clone().blob_client("container1", "blob2");
+    // blob_client.put_block_blob("hello world2").await.unwrap();
 
-    let signer = azure::AbfsFileSigner::emulator();
-    let presigned_url = signer.sign("container1/blob1").await.unwrap();
-    println!("presigned_url: {:?}", presigned_url);
+    // let signer = azure::AbfsFileSigner::emulator();
+    // let presigned_url = signer.sign("container1/blob1").await.unwrap();
+    // println!("presigned_url: {:?}", presigned_url);
 }
 
 // http://127.0.0.1:10000/devstoreaccount1/container1/blob1?sv=2020-06-12&sp=&sr=b&se=2023-12-09T22%3A10%3A35Z&sig=u4Kp8enrNc6AOyFrbe5nGKkscbXOCZPz1oOu3JWSqz8%3D
