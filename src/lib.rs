@@ -1,9 +1,10 @@
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 
 pub mod aws;
 pub mod azure;
 pub mod gcp;
 
+#[derive(Debug)]
 pub struct PresignedUrl {
     url: String,
     expires: String,
