@@ -1,9 +1,11 @@
+use std::time::Duration;
+
 use aws_sdk_s3::Client;
 use azure_core::error::{ErrorKind, ResultExt};
 use azure_storage::{prelude::*, shared_access_signature};
 use azure_storage_blobs::prelude::*;
 
-use crate::{CloudFileSigner, PresignedUrl, SignerError};
+use crate::{CloudFileSigner, Permission, PresignedUrl, SignerError};
 
 pub struct AbfsFileSigner {
     client_builder: ClientBuilder,
@@ -35,7 +37,12 @@ use azure_storage::clients::shared_access_signature;
 
 #[async_trait::async_trait]
 impl CloudFileSigner for AbfsFileSigner {
-    async fn sign(&self, path: &str) -> Result<PresignedUrl, SignerError> {
+    async fn sign(
+        &self,
+        path: &str,
+        expiration: Duration,
+        permission: Permission,
+    ) -> Result<PresignedUrl, SignerError> {
         let (container, blob) = path.split_once("/").unwrap();
 
         let mut permissions = BlobSasPermissions::default();

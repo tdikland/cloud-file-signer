@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use std::time::Duration;
 
 use aws_config::SdkConfig;
@@ -8,11 +7,14 @@ use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::presigning::PresigningConfigError;
 use aws_sdk_s3::Client;
 
-use http::Uri;
-
 use crate::CloudFileSigner;
+use crate::Permission;
 use crate::PresignedUrl;
 use crate::SignerError;
+
+pub use self::uri::S3Uri;
+
+mod uri;
 
 #[derive(Debug, Clone)]
 pub struct S3FileSigner {
@@ -36,116 +38,59 @@ impl S3FileSigner {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct S3Uri {
-    bucket: String,
-    region: Option<String>,
-    key: String,
-}
-
-impl S3Uri {
-    pub fn new(bucket: impl Into<String>, region: Option<String>, key: impl Into<String>) -> Self {
-        Self {
-            bucket: bucket.into(),
-            region,
-            key: key.into(),
-        }
-    }
-
-    pub fn bucket(&self) -> &str {
-        &self.bucket
-    }
-
-    pub fn key(&self) -> &str {
-        &self.key
-    }
-
-    pub fn to_url(&self) -> String {
-        format!(
-            "https://{0}.s3.amazonaws.com/{1}",
-            self.bucket(),
-            self.key()
-        )
-    }
-}
-
-impl FromStr for S3Uri {
-    type Err = SignerError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let uri: Uri = s.parse().map_err(|_| SignerError {})?;
-
-        // TODO: there are many naming schemes
-        if let Some(s) = uri.scheme_str() {
-            match s {
-                "https" => (),
-                _ => panic!("invalid scheme"),
-            }
-        } else {
-            return Err(SignerError {});
-        };
-
-        let bucket = if let Some(host) = uri.host() {
-            host.split(".").next().unwrap()
-        } else {
-            return Err(SignerError {});
-        };
-
-        let key = uri.path().strip_prefix("/").unwrap();
-
-        Ok(S3Uri::new(bucket.to_string(), None, key.to_string()))
-    }
-}
-
 impl S3FileSigner {
-    // fn parse_path(&self, url: &str) -> Result<(String, String), SignerError> {
-    //     let url = url.replace("s3://", "");
-    //     let parts: Vec<&str> = url.split('/').collect();
-    //     if parts.len() < 2 {
-    //         return Err(SignerError {});
-    //     }
-    //     let bucket = parts[0];
-    //     let key = parts[1..].join("/");
-    //     Ok((bucket.to_string(), key.to_string()))
-    // }
+    async fn sign_get_request(
+        &self,
+        uri: &S3Uri,
+        expiration: Duration,
+    ) -> Result<PresignedUrl, SignerError> {
+        let cfg = PresigningConfig::builder().expires_in(expiration).build()?;
+        let presigned_request = self
+            .client
+            .get_object()
+            .bucket(uri.bucket())
+            .key(uri.key())
+            .presigned(cfg)
+            .await?;
+
+        Ok(PresignedUrl::new(
+            presigned_request.uri().to_string(),
+            String::new(),
+        ))
+    }
 }
 
 #[async_trait::async_trait]
 impl CloudFileSigner for S3FileSigner {
-    async fn sign(&self, path: &str) -> Result<PresignedUrl, SignerError> {
-        // let (bucket, key) = self.parse_path(path)?;
+    async fn sign(
+        &self,
+        path: &str,
+        expiration: Duration,
+        permission: Permission,
+    ) -> Result<PresignedUrl, SignerError> {
         let s3_uri = path.parse::<S3Uri>()?;
-
-        let req = self
-            .client
-            .get_object()
-            .bucket(s3_uri.bucket())
-            .key(s3_uri.key());
-
-        let config = PresigningConfig::builder()
-            .expires_in(Duration::from_secs(3600))
-            .build()?;
-        let res = req.presigned(config).await?;
-
-        Ok(PresignedUrl::new(res.uri().to_string(), String::new()))
+        match permission {
+            Permission::Read => Ok(self.sign_get_request(&s3_uri, expiration).await?),
+            _ => unimplemented!(),
+        }
     }
 }
 
 impl From<PresigningConfigError> for SignerError {
-    fn from(_err: PresigningConfigError) -> Self {
-        SignerError {}
+    fn from(e: PresigningConfigError) -> Self {
+        SignerError::other_error(format!("Other error: {}", e))
     }
 }
 
 impl From<GetObjectError> for SignerError {
-    fn from(_err: GetObjectError) -> Self {
-        SignerError {}
+    fn from(e: GetObjectError) -> Self {
+        SignerError::other_error(format!("Other error: {}", e))
     }
 }
 
 impl<E, R> From<SdkError<E, R>> for SignerError {
-    fn from(_err: SdkError<E, R>) -> Self {
-        SignerError {}
+    fn from(e: SdkError<E, R>) -> Self {
+        SignerError::other_error(format!("Other error: {}", e))
     }
 }
 
