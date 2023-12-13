@@ -1,7 +1,7 @@
 use http::Uri;
 use std::str::FromStr;
 
-use crate::SignerError;
+use crate::error::SignerError;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct S3Uri {

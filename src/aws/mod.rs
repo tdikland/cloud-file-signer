@@ -10,10 +10,10 @@ use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::presigning::PresigningConfigError;
 use aws_sdk_s3::Client;
 
+use crate::error::SignerError;
+use crate::permissions::Permission;
+use crate::presigned_url::PresignedUrl;
 use crate::CloudFileSigner;
-use crate::Permission;
-use crate::PresignedUrl;
-use crate::SignerError;
 
 mod uri;
 
