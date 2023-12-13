@@ -1,4 +1,7 @@
+//! An implementation of the [`CloudFileSigner`] trait for Amazon S3.
+
 use std::time::Duration;
+use std::time::SystemTime;
 
 use aws_config::SdkConfig;
 use aws_sdk_s3::error::SdkError;
@@ -44,6 +47,8 @@ impl S3FileSigner {
         uri: &S3Uri,
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
+        let valid_from = SystemTime::now();
+
         let cfg = PresigningConfig::builder().expires_in(expiration).build()?;
         let presigned_request = self
             .client
@@ -55,7 +60,8 @@ impl S3FileSigner {
 
         Ok(PresignedUrl::new(
             presigned_request.uri().to_string(),
-            String::new(),
+            valid_from,
+            expiration,
         ))
     }
 }
@@ -65,13 +71,17 @@ impl CloudFileSigner for S3FileSigner {
     async fn sign(
         &self,
         path: &str,
+        _valid_from: SystemTime,
         expiration: Duration,
         permission: Permission,
     ) -> Result<PresignedUrl, SignerError> {
         let s3_uri = path.parse::<S3Uri>()?;
         match permission {
             Permission::Read => Ok(self.sign_get_request(&s3_uri, expiration).await?),
-            _ => unimplemented!(),
+            _ => Err(SignerError::permission_not_supported(format!(
+                "permission {:?} not supported",
+                permission
+            ))),
         }
     }
 }

@@ -18,11 +18,3 @@ services:
     image: mcr.microsoft.com/azure-storage/azurite
     ports:
       - 10000:10000
-
-  # fake-gcs:
-  #   # Custom image - see fsouza/fake-gcs-server#1164
-  #   image: tustvold/fake-gcs-server
-  #   command: ["-scheme", "http", "-public-host", "localhost:4443", "-backend", "memory"]
-  #   ports:
-  #     - 4443:4443
-

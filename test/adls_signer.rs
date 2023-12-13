@@ -31,6 +31,19 @@ impl<'a> MockAbfs<'a> {
             .block_on(blob_client.put_block_blob("hello world").into_future())
             .unwrap();
     }
+
+    fn teardown(&self) {
+        let container_client = self.cb.clone().container_client(&self.container);
+        self.rt
+            .block_on(container_client.delete().into_future())
+            .unwrap();
+    }
+}
+
+impl Drop for MockAbfs<'_> {
+    fn drop(&mut self) {
+        self.teardown();
+    }
 }
 
 #[test]
@@ -40,18 +53,14 @@ fn test_abfs_signer() {
         .build()
         .unwrap();
     let mock_abfs = MockAbfs::setup(&rt, "mycontainer");
-    mock_abfs.put_blob("mykey");
+    mock_abfs.put_blob("path/myfile");
 
     let signer = AbfsFileSigner::emulator();
 
+    let uri = "abfss://mycontainer@storageaccount1.dfs.core.windows.net/path/myfile";
     let presigned_url = rt
-        .block_on(signer.sign(
-            "mycontainer/mykey",
-            Duration::from_secs(3600),
-            Permission::Read,
-        ))
+        .block_on(signer.sign(uri, Duration::from_secs(3600), Permission::Read))
         .unwrap();
-    println!("presigned_url: {:?}", presigned_url);
 
     let c = reqwest::blocking::Client::builder().build().unwrap();
     let res = c.get(presigned_url.url()).send().unwrap().bytes().unwrap();
