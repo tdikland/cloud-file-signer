@@ -13,9 +13,9 @@ pub struct S3Uri {
 impl S3Uri {
     pub fn new(bucket: String, key: String, region: Option<String>) -> Self {
         Self {
-            bucket: bucket.into(),
+            bucket,
             region,
-            key: key.into(),
+            key,
         }
     }
 
@@ -26,7 +26,7 @@ impl S3Uri {
 
         let key = uri
             .path()
-            .strip_prefix("/")
+            .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error("Invalid URI: bad key"))?;
 
         Ok(Self::new(bucket.to_string(), key.to_string(), None))
@@ -59,11 +59,11 @@ impl S3Uri {
     fn parse_virtual_hosted_style_url(uri: Uri, bucket: &str) -> Result<Self, SignerError> {
         let key = uri
             .path()
-            .strip_prefix("/")
+            .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error("Invalid URI: bad path"))?;
 
         Ok(Self {
-            bucket: bucket.strip_suffix(".").unwrap().to_string(),
+            bucket: bucket.strip_suffix('.').unwrap().to_string(),
             key: key.to_string(),
             region: None,
         })
@@ -78,7 +78,7 @@ impl S3Uri {
             ))?;
 
         let (bucket, key) = path
-            .split_once("/")
+            .split_once('/')
             .ok_or(SignerError::uri_parse_error("Invalid URI: missing key"))?;
 
         Ok(Self {

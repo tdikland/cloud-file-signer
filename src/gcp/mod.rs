@@ -42,9 +42,11 @@ impl GcpFileSigner {
     ) -> Result<PresignedUrl, SignerError> {
         let valid_from = SystemTime::now();
 
-        let mut opts = SignedURLOptions::default();
-        opts.expires = expiration;
-        opts.method = SignedURLMethod::GET;
+        let mut opts = SignedURLOptions {
+            expires: expiration,
+            method: SignedURLMethod::GET,
+            ..Default::default()
+        };
 
         let url = self
             .client

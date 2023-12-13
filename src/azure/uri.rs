@@ -14,9 +14,9 @@ pub struct AzureUri {
 impl AzureUri {
     pub fn new(storage_account: String, container: String, blob: String) -> Self {
         Self {
-            storage_account: storage_account.into(),
-            container: container.into(),
-            blob: blob.into(),
+            storage_account: storage_account,
+            container: container,
+            blob: blob,
         }
     }
 
@@ -35,21 +35,21 @@ impl AzureUri {
     pub fn parse_abfss_uri(uri: &Uri) -> Result<Self, SignerError> {
         let storage_account = uri
             .host()
-            .and_then(|d| d.split_once("."))
+            .and_then(|d| d.split_once('.'))
             .map(|m| m.0)
             .ok_or(SignerError::uri_parse_error(
                 "Invalid URI. Could not parse storage account name",
             ))?;
         let container = uri
             .authority()
-            .and_then(|a| a.as_str().split_once("@"))
+            .and_then(|a| a.as_str().split_once('@'))
             .map(|m| m.0)
             .ok_or(SignerError::uri_parse_error(
                 "Invalid URI. Could not parse container name",
             ))?;
         let blob = uri
             .path()
-            .strip_prefix("/")
+            .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error("could not parse blob name"))?;
 
         Ok(Self::new(

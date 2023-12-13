@@ -101,7 +101,7 @@ fn test_s3_signer() {
     let s3_url = "s3://mybucket/mykey";
     let s3_signer = S3FileSigner::new(mock_s3.client());
     let presigned_url = rt
-        .block_on(s3_signer.sign_read_only_starting_now(&s3_url, Duration::from_secs(3600)))
+        .block_on(s3_signer.sign_read_only_starting_now(s3_url, Duration::from_secs(3600)))
         .unwrap();
 
     let c = reqwest::blocking::Client::builder().build().unwrap();
