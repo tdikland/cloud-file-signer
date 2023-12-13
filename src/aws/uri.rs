@@ -114,7 +114,7 @@ impl FromStr for S3Uri {
             .map_err(|e| SignerError::uri_parse_error(format!("Invalid URI: {e}")))?;
 
         match uri.scheme_str() {
-            Some("s3") | Some("s3a") => Ok(Self::from_s3_uri(uri)?),
+            Some("s3") | Some("s3a") | Some("s3n") => Ok(Self::from_s3_uri(uri)?),
             Some("http") | Some("https") => Ok(Self::from_url(uri)?),
             _ => Err(SignerError::uri_parse_error("Invalid URI scheme")),
         }
@@ -142,6 +142,22 @@ mod test {
     }
 
     #[test]
+    fn parse_s3n_scheme() {
+        let uri = "s3n://bucket/key";
+        let s3_uri = S3Uri::from_str(uri).unwrap();
+        assert_eq!(s3_uri.bucket(), "bucket");
+        assert_eq!(s3_uri.key(), "key");
+    }
+
+    #[test]
+    fn parse_s3_nested_key() {
+        let uri = "s3://bucket/key/nested";
+        let s3_uri = S3Uri::from_str(uri).unwrap();
+        assert_eq!(s3_uri.bucket(), "bucket");
+        assert_eq!(s3_uri.key(), "key/nested");
+    }
+
+    #[test]
     fn parse_http_scheme() {
         let uri = "http://bucket.s3.us-east-1.amazonaws.com/key";
         let s3_uri = S3Uri::from_str(uri).unwrap();
@@ -158,7 +174,7 @@ mod test {
     }
 
     #[test]
-    fn parse_https_global_region() {
+    fn parse_virtual_hosted_global() {
         let uri = "https://bucket.s3.amazonaws.com/key/nested";
         let s3_uri = S3Uri::from_str(uri).unwrap();
         assert_eq!(s3_uri.bucket(), "bucket");
@@ -166,7 +182,7 @@ mod test {
     }
 
     #[test]
-    fn parse_https_nested_key() {
+    fn parse_virtual_hosted_regional() {
         let uri = "https://bucket.s3.us-east-1.amazonaws.com/key/nested";
         let s3_uri = S3Uri::from_str(uri).unwrap();
         assert_eq!(s3_uri.bucket(), "bucket");
@@ -174,17 +190,25 @@ mod test {
     }
 
     #[test]
-    fn parse_invalid_scheme() {
-        let uri = "abfss://bucket.s3.us-east-1.amazonaws.com/key";
-        let s3_uri = S3Uri::from_str(uri);
-        assert!(s3_uri.is_err());
+    fn parse_path_style_global() {
+        let uri = "https://s3.amazonaws.com/bucket/key";
+        let s3_uri = S3Uri::from_str(uri).unwrap();
+        assert_eq!(s3_uri.bucket(), "bucket");
+        assert_eq!(s3_uri.key(), "key");
     }
 
     #[test]
-    fn parse_path_style_url() {
+    fn parse_path_style_regional() {
         let uri = "https://s3.us-east-1.amazonaws.com/bucket/key";
         let s3_uri = S3Uri::from_str(uri).unwrap();
         assert_eq!(s3_uri.bucket(), "bucket");
         assert_eq!(s3_uri.key(), "key");
+    }
+
+    #[test]
+    fn parse_invalid_scheme() {
+        let uri = "abfss://bucket.s3.us-east-1.amazonaws.com/key";
+        let s3_uri = S3Uri::from_str(uri);
+        assert!(s3_uri.is_err());
     }
 }
