@@ -32,7 +32,7 @@ impl GcpUri {
 
         let key = uri
             .path()
-            .strip_prefix("/")
+            .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error("Invalid URI: bad key"))?;
 
         Ok(Self::new(bucket.to_string(), key.to_string()))

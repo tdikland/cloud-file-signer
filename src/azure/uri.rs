@@ -14,9 +14,9 @@ pub struct AzureUri {
 impl AzureUri {
     pub fn new(storage_account: String, container: String, blob: String) -> Self {
         Self {
-            storage_account: storage_account,
-            container: container,
-            blob: blob,
+            storage_account,
+            container,
+            blob,
         }
     }
 

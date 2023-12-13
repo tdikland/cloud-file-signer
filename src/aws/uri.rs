@@ -72,7 +72,7 @@ impl S3Uri {
     fn parse_path_style_url(uri: Uri) -> Result<Self, SignerError> {
         let path = uri
             .path()
-            .strip_prefix("/")
+            .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error(
                 "Invalid URI: missing bucket and key",
             ))?;
