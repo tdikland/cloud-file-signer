@@ -17,21 +17,18 @@ use self::uri::GcpUri;
 
 mod uri;
 
+/// A signer for Google Cloud Storage.
 pub struct GcpFileSigner {
     client: Client,
 }
 
 impl GcpFileSigner {
+    /// Create a new signer for Google Cloud Storage.
     pub fn new(client: Client) -> Self {
         Self { client }
     }
 
-    pub async fn from_credentials() -> Self {
-        let client_config = ClientConfig::default().with_auth().await.unwrap();
-        let client = Client::new(client_config);
-        Self { client }
-    }
-
+    /// Create a new signer for Google Cloud Storage using environment variables.
     pub async fn from_env() -> Self {
         let client_config = ClientConfig::default().with_auth().await.unwrap();
         let client = Client::new(client_config);

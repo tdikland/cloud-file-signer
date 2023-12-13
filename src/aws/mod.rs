@@ -15,25 +15,27 @@ use crate::Permission;
 use crate::PresignedUrl;
 use crate::SignerError;
 
-pub use self::uri::S3Uri;
-
 mod uri;
 
+/// A signer for Amazon S3.
 #[derive(Debug, Clone)]
 pub struct S3FileSigner {
     client: Client,
 }
 
 impl S3FileSigner {
+    /// Create a new signer for Amazon S3.
     pub fn new(client: Client) -> Self {
         Self { client }
     }
 
+    /// Create a new signer for Amazon S3 from a [`SdkConfig`].
     pub async fn from_config(config: &SdkConfig) -> Self {
         let client = Client::new(config);
         Self { client }
     }
 
+    /// Create a new signer for Amazon S3 from the environment.
     pub async fn from_env() -> Self {
         let config = aws_config::load_from_env().await;
         let client = Client::new(&config);
@@ -44,7 +46,7 @@ impl S3FileSigner {
 impl S3FileSigner {
     async fn sign_get_request(
         &self,
-        uri: &S3Uri,
+        uri: &uri::S3Uri,
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
         let valid_from = SystemTime::now();
@@ -75,7 +77,7 @@ impl CloudFileSigner for S3FileSigner {
         expiration: Duration,
         permission: Permission,
     ) -> Result<PresignedUrl, SignerError> {
-        let s3_uri = path.parse::<S3Uri>()?;
+        let s3_uri = path.parse::<uri::S3Uri>()?;
         match permission {
             Permission::Read => Ok(self.sign_get_request(&s3_uri, expiration).await?),
             _ => Err(SignerError::permission_not_supported(format!(
@@ -101,18 +103,5 @@ impl From<GetObjectError> for SignerError {
 impl<E, R> From<SdkError<E, R>> for SignerError {
     fn from(e: SdkError<E, R>) -> Self {
         SignerError::other_error(format!("Other error: {}", e))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn parse_s3_uri() {
-        let s3_uri = "https://foo.s3.us-east-1.amazonaws.com/bar";
-        let parsed_s3_uri = s3_uri.parse::<S3Uri>().unwrap();
-        assert_eq!(parsed_s3_uri.bucket(), "foo");
-        assert_eq!(parsed_s3_uri.key(), "bar");
     }
 }

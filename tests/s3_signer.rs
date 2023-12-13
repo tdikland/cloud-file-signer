@@ -5,8 +5,8 @@ use aws_sdk_s3::types::{Delete, ObjectIdentifier};
 use aws_sdk_s3::{config::Credentials, primitives::ByteStream, Client};
 use tokio::runtime::Runtime;
 
-use cloud_file_signer::aws::{S3FileSigner, S3Uri};
-use cloud_file_signer::{CloudFileSigner, Permission};
+use cloud_file_signer::aws::S3FileSigner;
+use cloud_file_signer::CloudFileSigner;
 
 struct MockS3<'a> {
     rt: &'a Runtime,
@@ -98,10 +98,10 @@ fn test_s3_signer() {
     mock_s3.create_bucket();
     mock_s3.put_object("mykey");
 
-    let s3_url = S3Uri::new("mybucket".to_string(), "mykey".to_string(), None).to_url();
+    let s3_url = "s3://mybucket/mykey";
     let s3_signer = S3FileSigner::new(mock_s3.client());
     let presigned_url = rt
-        .block_on(s3_signer.sign(&s3_url, Duration::from_secs(3600), Permission::Read))
+        .block_on(s3_signer.sign_read_only_starting_now(&s3_url, Duration::from_secs(3600)))
         .unwrap();
 
     let c = reqwest::blocking::Client::builder().build().unwrap();

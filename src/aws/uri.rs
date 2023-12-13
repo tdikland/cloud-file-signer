@@ -95,14 +95,6 @@ impl S3Uri {
     pub fn key(&self) -> &str {
         &self.key
     }
-
-    pub fn to_url(&self) -> String {
-        format!(
-            "https://{0}.s3.amazonaws.com/{1}",
-            self.bucket(),
-            self.key()
-        )
-    }
 }
 
 impl FromStr for S3Uri {

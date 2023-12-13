@@ -10,30 +10,47 @@ mod uri;
 
 use self::uri::AzureUri;
 
+/// A signer for Azure Blob Storage.
+#[derive(Debug, Clone)]
 pub struct AbfsFileSigner {
+    storage_account: String,
     client_builder: ClientBuilder,
-    storage_account_name: String,
 }
 
 impl AbfsFileSigner {
-    // fn new(cb: ClientBuilder) -> Self {
-    //     Self {
-    //         storage_account_name: todo!(),
-    //     }
-    // }
-
-    // TODO: remove and refactor
-    pub fn emulator() -> Self {
-        let cb = ClientBuilder::emulator();
-        let account_name = "storageaccount1";
+    /// Create a new signer for Azure Blob Storage.
+    pub fn new<A: Into<String>, C: Into<StorageCredentials>>(
+        storage_account: A,
+        storage_credentials: C,
+    ) -> Self {
+        let storage_account_name = storage_account.into();
+        let client_builder = ClientBuilder::new(storage_account_name.clone(), storage_credentials);
         Self {
-            client_builder: cb,
-            storage_account_name: account_name.into(),
+            storage_account: storage_account_name,
+            client_builder,
         }
     }
 
-    fn storage_account_name(&self) -> &str {
-        &self.storage_account_name
+    /// Create a new signer for Azure Blob Storage with specified client builder.
+    pub fn from_client_builder<A: Into<String>>(
+        storage_account: A,
+        client_builder: ClientBuilder,
+    ) -> Self {
+        let storage_account_name = storage_account.into();
+        Self {
+            storage_account: storage_account_name,
+            client_builder,
+        }
+    }
+
+    /// Return the name of the storage account for which this
+    /// signer is configured.
+    pub fn storage_account(&self) -> &str {
+        &self.storage_account
+    }
+
+    fn client_builder(&self) -> ClientBuilder {
+        self.client_builder.clone()
     }
 
     async fn sign_read_request(
@@ -41,7 +58,7 @@ impl AbfsFileSigner {
         uri: &AzureUri,
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
-        if uri.storage_account() != self.storage_account_name() {
+        if uri.storage_account() != self.storage_account() {
             return Err(SignerError::other_error(
                 "Storage account name in URI does not match signer",
             ));
@@ -55,8 +72,7 @@ impl AbfsFileSigner {
         let expiry = time::OffsetDateTime::now_utc() + expiration;
 
         let blob_client = self
-            .client_builder
-            .clone()
+            .client_builder()
             .blob_client(uri.container(), uri.blob());
         let sas_token = blob_client
             .shared_access_signature(permissions, expiry)

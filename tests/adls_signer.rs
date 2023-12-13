@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use azure_storage_blobs::prelude::ClientBuilder;
-use cloud_file_signer::{azure::AbfsFileSigner, CloudFileSigner, Permission};
+use cloud_file_signer::{azure::AbfsFileSigner, CloudFileSigner};
 use tokio::runtime::Runtime;
 
 struct MockAbfs<'a> {
@@ -55,11 +55,12 @@ fn test_abfs_signer() {
     let mock_abfs = MockAbfs::setup(&rt, "mycontainer");
     mock_abfs.put_blob("path/myfile");
 
-    let signer = AbfsFileSigner::emulator();
+    let cb = ClientBuilder::emulator();
+    let signer = AbfsFileSigner::from_client_builder("devstoreaccount1", cb);
 
-    let uri = "abfss://mycontainer@storageaccount1.dfs.core.windows.net/path/myfile";
+    let uri = "abfss://mycontainer@devstoreaccount1.dfs.core.windows.net/path/myfile";
     let presigned_url = rt
-        .block_on(signer.sign(uri, Duration::from_secs(3600), Permission::Read))
+        .block_on(signer.sign_read_only_starting_now(uri, Duration::from_secs(3600)))
         .unwrap();
 
     let c = reqwest::blocking::Client::builder().build().unwrap();
