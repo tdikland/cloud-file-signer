@@ -13,7 +13,7 @@ use std::time::{Duration, SystemTime};
 /// expiry of the underlying credentials.
 ///
 /// A `PresignedUrl` is typically created by an implementor of the
-/// [`CloudFileSigner`] trait.
+/// `CloudFileSigner` trait.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PresignedUrl {
     url: String,
