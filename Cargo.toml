@@ -1,16 +1,25 @@
 [package]
 name = "cloud-file-signer"
 version = "0.1.0"
+authors = ["Tim Dikland <timdikland@gmail.com>"]
 edition = "2021"
+rust-version = "1.72.1"
+description = "A uniform interface for signing cloud object storage URLs"
+readme = "README.md"
+repository = "https://github.com/tdikland/cloud-file-signer"
+license = "MIT"
+keywords = ["presign", "url", "cloud", "storage", "object"]
+categories = ["web-programming", "filesystem"]
+publish = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1.74"
+async-trait = { version = "0.1.74" }
 aws-config = { version = "1.0.3", features = ["behavior-version-latest"] }
-aws-credential-types = {version="1.0.3", features = ["hardcoded-credentials"]}
+aws-credential-types = { version = "1.0.3", features = [
+    "hardcoded-credentials",
+] }
 aws-sdk-s3 = { version = "1.5.0", features = ["behavior-version-latest"] }
-reqwest = { version = "0.11.22", features = ["blocking"] }
 time = { version = "0.3.30", features = ["local-offset"] }
 azure_core = "0.17.0"
 azure_storage = "0.17.0"

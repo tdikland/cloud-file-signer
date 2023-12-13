@@ -1,6 +1,10 @@
 //! A presigned URL for a file in a (cloud) object store.
 
-use std::time::{Duration, SystemTime};
+use std::{
+    fmt::{Display, Formatter},
+    ops::Deref,
+    time::{Duration, SystemTime},
+};
 
 /// A presigned URL for a file in a (cloud) object store.
 ///
@@ -144,5 +148,25 @@ impl PresignedUrl {
     /// ```
     pub fn is_valid(&self) -> bool {
         !self.is_expired()
+    }
+}
+
+impl Display for PresignedUrl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.url)
+    }
+}
+
+impl AsRef<str> for PresignedUrl {
+    fn as_ref(&self) -> &str {
+        &self.url
+    }
+}
+
+impl Deref for PresignedUrl {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.url
     }
 }
