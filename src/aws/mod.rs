@@ -25,7 +25,8 @@ pub struct S3FileSigner {
 
 impl S3FileSigner {
     /// Create a new signer for Amazon S3.
-    #[must_use] pub fn new(client: Client) -> Self {
+    #[must_use]
+    pub fn new(client: Client) -> Self {
         Self { client }
     }
 

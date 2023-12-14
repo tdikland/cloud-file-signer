@@ -15,12 +15,14 @@ impl SignerError {
     }
 
     /// Return the kind of error.
-    #[must_use] pub fn kind(&self) -> SignerErrorKind {
+    #[must_use]
+    pub fn kind(&self) -> SignerErrorKind {
         self.kind
     }
 
     /// Return the error message.
-    #[must_use] pub fn message(&self) -> &str {
+    #[must_use]
+    pub fn message(&self) -> &str {
         &self.message
     }
 

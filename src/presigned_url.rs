@@ -67,7 +67,8 @@ impl PresignedUrl {
     /// );
     /// assert_eq!(presigned_url.url(), "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key");
     /// ```
-    #[must_use] pub fn url(&self) -> &str {
+    #[must_use]
+    pub fn url(&self) -> &str {
         &self.url
     }
 
@@ -85,7 +86,8 @@ impl PresignedUrl {
     /// );
     /// assert!(presigned_url.valid_from() <= SystemTime::now());
     /// ```
-    #[must_use] pub fn valid_from(&self) -> SystemTime {
+    #[must_use]
+    pub fn valid_from(&self) -> SystemTime {
         self.valid_from
     }
 
@@ -104,7 +106,8 @@ impl PresignedUrl {
     /// );
     /// assert_eq!(presigned_url.valid_until(), now + Duration::from_secs(60));
     /// ```
-    #[must_use] pub fn valid_until(&self) -> SystemTime {
+    #[must_use]
+    pub fn valid_until(&self) -> SystemTime {
         self.valid_from + self.valid_for_duration
     }
 
@@ -125,7 +128,8 @@ impl PresignedUrl {
     /// sleep(Duration::from_secs(2));
     /// assert_eq!(presigned_url.is_expired(), true);
     /// ```
-    #[must_use] pub fn is_expired(&self) -> bool {
+    #[must_use]
+    pub fn is_expired(&self) -> bool {
         SystemTime::now() > self.valid_until()
     }
 
@@ -146,7 +150,8 @@ impl PresignedUrl {
     /// sleep(Duration::from_secs(2));
     /// assert_eq!(presigned_url.is_valid(), false);
     /// ```
-    #[must_use] pub fn is_valid(&self) -> bool {
+    #[must_use]
+    pub fn is_valid(&self) -> bool {
         !self.is_expired()
     }
 }
