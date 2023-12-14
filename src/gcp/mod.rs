@@ -24,7 +24,8 @@ pub struct GcpFileSigner {
 
 impl GcpFileSigner {
     /// Create a new signer for Google Cloud Storage.
-    #[must_use] pub fn new(client: Client) -> Self {
+    #[must_use]
+    pub fn new(client: Client) -> Self {
         Self { client }
     }
 
@@ -48,12 +49,12 @@ impl GcpFileSigner {
             ..Default::default()
         };
 
-        let url = self
+        let signed_url = self
             .client
             .signed_url(uri.bucket(), uri.key(), None, None, opts)
             .await
             .map_err(|e| SignerError::other_error(e.to_string()))?;
-        Ok(PresignedUrl::new(url, valid_from, expiration))
+        Ok(PresignedUrl::new(signed_url, valid_from, expiration))
     }
 }
 

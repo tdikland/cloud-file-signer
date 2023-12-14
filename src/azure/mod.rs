@@ -45,7 +45,8 @@ impl AbfsFileSigner {
 
     /// Return the name of the storage account for which this
     /// signer is configured.
-    #[must_use] pub fn storage_account(&self) -> &str {
+    #[must_use]
+    pub fn storage_account(&self) -> &str {
         &self.storage_account
     }
 
@@ -80,8 +81,8 @@ impl AbfsFileSigner {
             .unwrap();
         let sas_token = sas_token.start(time::OffsetDateTime::now_utc());
 
-        let url = blob_client.generate_signed_blob_url(&sas_token).unwrap();
-        Ok(PresignedUrl::new(url, valid_from, expiration))
+        let signed_url = blob_client.generate_signed_blob_url(&sas_token).unwrap();
+        Ok(PresignedUrl::new(signed_url, valid_from, expiration))
     }
 }
 

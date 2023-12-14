@@ -19,7 +19,7 @@ impl S3Uri {
         }
     }
 
-    fn from_s3_uri(uri: Uri) -> Result<Self, SignerError> {
+    fn from_s3_uri(uri: &Uri) -> Result<Self, SignerError> {
         let bucket = uri
             .host()
             .ok_or(SignerError::uri_parse_error("Invalid URI: missing bucket"))?;
@@ -32,7 +32,7 @@ impl S3Uri {
         Ok(Self::new(bucket.to_string(), key.to_string(), None))
     }
 
-    fn from_url(uri: Uri) -> Result<Self, SignerError> {
+    fn from_url(uri: &Uri) -> Result<Self, SignerError> {
         let host = uri
             .host()
             .ok_or(SignerError::uri_parse_error("Invalid URI"))?;
@@ -42,17 +42,17 @@ impl S3Uri {
         let cap = re.captures(host).ok_or(SignerError::uri_parse_error(
             "Invalid URI. Hostname does not appear to be a valid S3 endpoint",
         ))?;
-        let region = cap.get(2).map(|m| m.as_str());
+        let _region = cap.get(2).map(|m| m.as_str());
         let prefix = cap.get(1).map(|m| m.as_str());
 
         if let Some(p) = prefix {
-            Self::parse_virtual_hosted_style_url(uri.clone(), p)
+            Self::parse_virtual_hosted_style_url(uri, p)
         } else {
             Self::parse_path_style_url(uri.clone())
         }
     }
 
-    fn parse_virtual_hosted_style_url(uri: Uri, bucket: &str) -> Result<Self, SignerError> {
+    fn parse_virtual_hosted_style_url(uri: &Uri, bucket: &str) -> Result<Self, SignerError> {
         let key = uri
             .path()
             .strip_prefix('/')
@@ -102,8 +102,8 @@ impl FromStr for S3Uri {
             .map_err(|e| SignerError::uri_parse_error(format!("Invalid URI: {e}")))?;
 
         match uri.scheme_str() {
-            Some("s3" | "s3a" | "s3n") => Ok(Self::from_s3_uri(uri)?),
-            Some("http" | "https") => Ok(Self::from_url(uri)?),
+            Some("s3" | "s3a" | "s3n") => Ok(Self::from_s3_uri(&uri)?),
+            Some("http" | "https") => Ok(Self::from_url(&uri)?),
             _ => Err(SignerError::uri_parse_error("Invalid URI scheme")),
         }
     }
