@@ -2,7 +2,6 @@
 
 use std::{
     fmt::{Display, Formatter},
-    ops::Deref,
     time::{Duration, SystemTime},
 };
 
@@ -164,14 +163,6 @@ impl Display for PresignedUrl {
 
 impl AsRef<str> for PresignedUrl {
     fn as_ref(&self) -> &str {
-        &self.url
-    }
-}
-
-impl Deref for PresignedUrl {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
         &self.url
     }
 }
