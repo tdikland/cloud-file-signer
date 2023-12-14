@@ -4,7 +4,7 @@
 //! Presigned URLs are useful for granting temporary access to files in
 //! cloud storage.
 //!
-//! # CloudFileSigner
+//! # `CloudFileSigner`
 //!
 //! The `CloudFileSigner` trait defines a uniform interface for signing
 //! URLs. Implementations of `CloudFileSigner` are provided for AWS S3,

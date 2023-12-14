@@ -69,7 +69,7 @@ impl FromStr for AzureUri {
         })?;
 
         match uri.scheme_str() {
-            Some("abfss") | Some("abfs") => Self::parse_abfss_uri(&uri),
+            Some("abfss" | "abfs") => Self::parse_abfss_uri(&uri),
             _ => Err(SignerError::uri_parse_error(
                 "Invalid URI. Scheme must be abfss or abfs",
             )),

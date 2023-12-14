@@ -15,21 +15,21 @@ impl SignerError {
     }
 
     /// Return the kind of error.
-    pub fn kind(&self) -> SignerErrorKind {
+    #[must_use] pub fn kind(&self) -> SignerErrorKind {
         self.kind
     }
 
     /// Return the error message.
-    pub fn message(&self) -> &str {
+    #[must_use] pub fn message(&self) -> &str {
         &self.message
     }
 
-    /// Create a new CloudUriParseError.
+    /// Create a new `CloudUriParseError`.
     pub fn uri_parse_error(message: impl Into<String>) -> Self {
         Self::new(SignerErrorKind::CloudUriParseError, message.into())
     }
 
-    /// Create a new PermissionNotSupported error.
+    /// Create a new `PermissionNotSupported` error.
     pub fn permission_not_supported(message: impl Into<String>) -> Self {
         Self::new(SignerErrorKind::PermissionNotSupported, message.into())
     }

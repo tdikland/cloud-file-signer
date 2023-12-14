@@ -24,7 +24,7 @@ pub struct GcpFileSigner {
 
 impl GcpFileSigner {
     /// Create a new signer for Google Cloud Storage.
-    pub fn new(client: Client) -> Self {
+    #[must_use] pub fn new(client: Client) -> Self {
         Self { client }
     }
 

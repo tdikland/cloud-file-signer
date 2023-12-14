@@ -25,7 +25,7 @@ pub struct S3FileSigner {
 
 impl S3FileSigner {
     /// Create a new signer for Amazon S3.
-    pub fn new(client: Client) -> Self {
+    #[must_use] pub fn new(client: Client) -> Self {
         Self { client }
     }
 
@@ -81,8 +81,7 @@ impl CloudFileSigner for S3FileSigner {
         match permission {
             Permission::Read => Ok(self.sign_get_request(&s3_uri, expiration).await?),
             _ => Err(SignerError::permission_not_supported(format!(
-                "permission {:?} not supported",
-                permission
+                "permission {permission:?} not supported"
             ))),
         }
     }
@@ -90,18 +89,18 @@ impl CloudFileSigner for S3FileSigner {
 
 impl From<PresigningConfigError> for SignerError {
     fn from(e: PresigningConfigError) -> Self {
-        SignerError::other_error(format!("Other error: {}", e))
+        SignerError::other_error(format!("Other error: {e}"))
     }
 }
 
 impl From<GetObjectError> for SignerError {
     fn from(e: GetObjectError) -> Self {
-        SignerError::other_error(format!("Other error: {}", e))
+        SignerError::other_error(format!("Other error: {e}"))
     }
 }
 
 impl<E, R> From<SdkError<E, R>> for SignerError {
     fn from(e: SdkError<E, R>) -> Self {
-        SignerError::other_error(format!("Other error: {}", e))
+        SignerError::other_error(format!("Other error: {e}"))
     }
 }

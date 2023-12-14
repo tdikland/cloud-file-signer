@@ -45,7 +45,7 @@ impl AbfsFileSigner {
 
     /// Return the name of the storage account for which this
     /// signer is configured.
-    pub fn storage_account(&self) -> &str {
+    #[must_use] pub fn storage_account(&self) -> &str {
         &self.storage_account
     }
 
@@ -99,8 +99,7 @@ impl CloudFileSigner for AbfsFileSigner {
         match permission {
             Permission::Read => Ok(self.sign_read_request(&azure_uri, expiration).await?),
             _ => Err(SignerError::permission_not_supported(format!(
-                "permission {:?} not supported",
-                permission
+                "permission {permission:?} not supported"
             ))),
         }
     }

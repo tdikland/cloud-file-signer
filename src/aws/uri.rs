@@ -14,8 +14,8 @@ impl S3Uri {
     pub fn new(bucket: String, key: String, region: Option<String>) -> Self {
         Self {
             bucket,
-            region,
             key,
+            region,
         }
     }
 
@@ -44,10 +44,6 @@ impl S3Uri {
         ))?;
         let region = cap.get(2).map(|m| m.as_str());
         let prefix = cap.get(1).map(|m| m.as_str());
-
-        println!("HOST: {:?}", host);
-        println!("REGION: {:?}", region);
-        println!("PREFIX: {:?}", prefix);
 
         if let Some(p) = prefix {
             Self::parse_virtual_hosted_style_url(uri.clone(), p)
@@ -106,8 +102,8 @@ impl FromStr for S3Uri {
             .map_err(|e| SignerError::uri_parse_error(format!("Invalid URI: {e}")))?;
 
         match uri.scheme_str() {
-            Some("s3") | Some("s3a") | Some("s3n") => Ok(Self::from_s3_uri(uri)?),
-            Some("http") | Some("https") => Ok(Self::from_url(uri)?),
+            Some("s3" | "s3a" | "s3n") => Ok(Self::from_s3_uri(uri)?),
+            Some("http" | "https") => Ok(Self::from_url(uri)?),
             _ => Err(SignerError::uri_parse_error("Invalid URI scheme")),
         }
     }
