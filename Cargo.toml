@@ -10,7 +10,6 @@ repository = "https://github.com/tdikland/cloud-file-signer"
 license = "MIT"
 keywords = ["presign", "url", "cloud", "storage", "object"]
 categories = ["web-programming", "filesystem"]
-publish = false
 
 
 [dependencies]
