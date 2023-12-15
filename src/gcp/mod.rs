@@ -1,8 +1,12 @@
 //! An implementation of the [`CloudFileSigner`] trait for Google Cloud Storage.
 
+use std::collections::HashMap;
 use std::time::Duration;
 use std::time::SystemTime;
 
+use chrono::DateTime;
+use chrono::SecondsFormat;
+use chrono::Utc;
 use google_cloud_storage::client::Client;
 use google_cloud_storage::client::ClientConfig;
 use google_cloud_storage::sign::SignedURLMethod;
@@ -39,13 +43,19 @@ impl GcpFileSigner {
     async fn sign_read_request(
         &self,
         uri: &GcpUri,
+        valid_from: SystemTime,
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
-        let valid_from = SystemTime::now();
+        let mut query_params = HashMap::new();
+        query_params.insert(
+            String::from("X-Goog-Date"),
+            vec![DateTime::<Utc>::from(valid_from).to_rfc3339_opts(SecondsFormat::Secs, true)],
+        );
 
         let opts = SignedURLOptions {
             expires: expiration,
             method: SignedURLMethod::GET,
+            query_parameters: query_params,
             ..Default::default()
         };
 
@@ -63,13 +73,13 @@ impl CloudFileSigner for GcpFileSigner {
     async fn sign(
         &self,
         path: &str,
-        _valid_from: SystemTime,
+        valid_from: SystemTime,
         expiration: Duration,
         permission: Permission,
     ) -> Result<PresignedUrl, SignerError> {
         let uri = path.parse::<GcpUri>()?;
         match permission {
-            Permission::Read => self.sign_read_request(&uri, expiration).await,
+            Permission::Read => self.sign_read_request(&uri, valid_from, expiration).await,
             Permission::Write => Err(SignerError::permission_not_supported(
                 "GCP does not support write permissions",
             )),
