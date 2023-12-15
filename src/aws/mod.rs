@@ -48,17 +48,44 @@ impl S3FileSigner {
     async fn sign_get_request(
         &self,
         uri: &uri::S3Uri,
+        valid_from: SystemTime,
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
-        let valid_from = SystemTime::now();
-
-        let cfg = PresigningConfig::builder().expires_in(expiration).build()?;
+        let presign_cfg = PresigningConfig::builder()
+            .start_time(valid_from)
+            .expires_in(expiration)
+            .build()?;
         let presigned_request = self
             .client
             .get_object()
             .bucket(uri.bucket())
             .key(uri.key())
-            .presigned(cfg)
+            .presigned(presign_cfg)
+            .await?;
+
+        Ok(PresignedUrl::new(
+            presigned_request.uri().to_string(),
+            valid_from,
+            expiration,
+        ))
+    }
+
+    async fn sign_put_request(
+        &self,
+        uri: &uri::S3Uri,
+        valid_from: SystemTime,
+        expiration: Duration,
+    ) -> Result<PresignedUrl, SignerError> {
+        let presign_cfg = PresigningConfig::builder()
+            .start_time(valid_from)
+            .expires_in(expiration)
+            .build()?;
+        let presigned_request = self
+            .client
+            .put_object()
+            .bucket(uri.bucket())
+            .key(uri.key())
+            .presigned(presign_cfg)
             .await?;
 
         Ok(PresignedUrl::new(
@@ -74,34 +101,38 @@ impl CloudFileSigner for S3FileSigner {
     async fn sign(
         &self,
         path: &str,
-        _valid_from: SystemTime,
+        valid_from: SystemTime,
         expiration: Duration,
         permission: Permission,
     ) -> Result<PresignedUrl, SignerError> {
         let s3_uri = path.parse::<uri::S3Uri>()?;
         match permission {
-            Permission::Read => Ok(self.sign_get_request(&s3_uri, expiration).await?),
-            _ => Err(SignerError::permission_not_supported(format!(
-                "permission {permission:?} not supported"
-            ))),
+            Permission::Read => Ok(self
+                .sign_get_request(&s3_uri, valid_from, expiration)
+                .await?),
+            Permission::Write => Ok(self
+                .sign_put_request(&s3_uri, valid_from, expiration)
+                .await?),
         }
     }
 }
 
 impl From<PresigningConfigError> for SignerError {
     fn from(e: PresigningConfigError) -> Self {
-        SignerError::other_error(format!("Other error: {e}"))
+        SignerError::expiration_too_long(format!(
+            "AWS S3 presigned URLs cannot be valid for longer than 1 week. Cause: {e}"
+        ))
     }
 }
 
 impl From<GetObjectError> for SignerError {
     fn from(e: GetObjectError) -> Self {
-        SignerError::other_error(format!("Other error: {e}"))
+        SignerError::other_error(format!("Other error. Cause: {e}"))
     }
 }
 
 impl<E, R> From<SdkError<E, R>> for SignerError {
     fn from(e: SdkError<E, R>) -> Self {
-        SignerError::other_error(format!("Other error: {e}"))
+        SignerError::other_error(format!("Other error. Cause: {e}"))
     }
 }

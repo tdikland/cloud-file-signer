@@ -52,4 +52,15 @@ pub trait CloudFileSigner {
         self.sign(path, SystemTime::now(), expiration, Permission::Read)
             .await
     }
+
+    /// Sign a URL for a file in a cloud object store. The URL is valid
+    /// for the specified duration and grants write permission.
+    async fn sign_write_only_starting_now(
+        &self,
+        path: &str,
+        expiration: Duration,
+    ) -> Result<PresignedUrl, SignerError> {
+        self.sign(path, SystemTime::now(), expiration, Permission::Write)
+            .await
+    }
 }

@@ -31,6 +31,11 @@ impl SignerError {
         Self::new(SignerErrorKind::CloudUriParseError, message.into())
     }
 
+    /// Create a new `ExpirationTooLong` error.
+    pub fn expiration_too_long(message: impl Into<String>) -> Self {
+        Self::new(SignerErrorKind::ExpirationTooLong, message.into())
+    }
+
     /// Create a new `PermissionNotSupported` error.
     pub fn permission_not_supported(message: impl Into<String>) -> Self {
         Self::new(SignerErrorKind::PermissionNotSupported, message.into())
@@ -42,6 +47,14 @@ impl SignerError {
     }
 }
 
+impl Display for SignerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}] {}", self.kind, self.message)
+    }
+}
+
+impl std::error::Error for SignerError {}
+
 /// The kind of error that occurred while signing a URL.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SignerErrorKind {
@@ -49,14 +62,22 @@ pub enum SignerErrorKind {
     CloudUriParseError,
     /// The requested permission is not supported by the signer.
     PermissionNotSupported,
+    /// The configured expiration duration is too long.
+    ExpirationTooLong,
+    /// An error occured during the signature calculation.
+    SigningError,
     /// Some other error occurred.
     Other,
 }
 
-impl Display for SignerError {
+impl Display for SignerErrorKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SignerError")
+        match self {
+            SignerErrorKind::CloudUriParseError => write!(f, "CLOUD_URI_PARSE_ERROR"),
+            SignerErrorKind::PermissionNotSupported => write!(f, "PERMISSION_NOT_SUPPORTED"),
+            SignerErrorKind::ExpirationTooLong => write!(f, "EXPIRATION_TOO_LONG"),
+            SignerErrorKind::SigningError => write!(f, "SIGNING_ERROR"),
+            SignerErrorKind::Other => write!(f, "OTHER_ERROR"),
+        }
     }
 }
-
-impl std::error::Error for SignerError {}

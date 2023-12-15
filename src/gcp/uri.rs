@@ -4,6 +4,7 @@ use http::Uri;
 
 use crate::SignerError;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GcpUri {
     bucket: String,
     key: String,
@@ -44,18 +45,39 @@ impl FromStr for GcpUri {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let uri = Uri::from_str(s).map_err(|e| SignerError::uri_parse_error(e.to_string()))?;
-        Self::parse_gs_uri(uri)
+        match uri.scheme_str() {
+            Some("gs") => Self::parse_gs_uri(uri),
+            None => Err(SignerError::uri_parse_error(
+                format!("Invalid URI: missing scheme. The URI should start with `gs`. Received URI: `{s}`."))
+            ),
+            Some(unsupported_scheme) => Err(SignerError::uri_parse_error(
+                format!("Unsupported URI scheme. Supported schemas is `gs`. Received scheme: `{unsupported_scheme}`."),
+            )),}
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::error::SignerErrorKind;
+
     use super::*;
 
     #[test]
     fn parse_gs_uri() {
-        let uri = "gs://bucket/key".parse::<GcpUri>().unwrap();
-        assert_eq!(uri.bucket(), "bucket");
-        assert_eq!(uri.key(), "key");
+        let uri = "gs://bucket/key";
+        let gcp_uri = uri.parse::<GcpUri>().unwrap();
+        assert_eq!(gcp_uri.bucket(), "bucket");
+        assert_eq!(gcp_uri.key(), "key");
+    }
+
+    #[test]
+    fn parse_unsupported_scheme() {
+        let uri = "invalid://bucket/key";
+        let uri_err = uri.parse::<GcpUri>().unwrap_err();
+        assert_eq!(uri_err.kind(), SignerErrorKind::CloudUriParseError);
+        assert_eq!(
+            uri_err.message(),
+            "Unsupported URI scheme. Supported schemas is `gs`. Received scheme: `invalid`."
+        )
     }
 }
