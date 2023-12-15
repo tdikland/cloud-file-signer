@@ -18,8 +18,7 @@ struct MockS3<'a> {
 
 impl<'a> MockS3<'a> {
     fn setup(async_runtime: &'a Runtime) -> Self {
-        // Add UUID
-        let bucket_name = "my-test-bucket";
+        let bucket_name = format!("my-test-bucket-{}", uuid::Uuid::new_v4());
         let shared_conf = aws_config::defaults(BehaviorVersion::latest())
             .credentials_provider(Credentials::from_keys(
                 "delta-sharing",
@@ -116,6 +115,15 @@ fn test_s3_signer() {
     let c = reqwest::blocking::Client::builder().build().unwrap();
     let res = c.get(presigned_url.url()).send().unwrap().bytes().unwrap();
     assert_eq!(res, "hello world");
+}
+
+#[test]
+fn test_s3_signer_expired_url() {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let mock_s3 = MockS3::setup(&rt);
 
     // Read an object using a expired presigned URL.
     mock_s3.put_object("my-expired-key");
