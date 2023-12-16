@@ -153,6 +153,25 @@ impl PresignedUrl {
     pub fn is_valid(&self) -> bool {
         !self.is_expired()
     }
+
+    /// Convert the `PresignedUrl` into a `String`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use std::time::{Duration, SystemTime};
+    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    ///
+    /// let presigned_url = PresignedUrl::new(
+    ///    "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key",
+    ///    SystemTime::now(),
+    ///    Duration::from_secs(60),
+    /// );
+    /// assert_eq!(presigned_url.into_string(), "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key");
+    /// ```
+    #[must_use]
+    pub fn into_string(self) -> String {
+        self.url
+    }
 }
 
 impl Display for PresignedUrl {

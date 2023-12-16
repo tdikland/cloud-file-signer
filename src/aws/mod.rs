@@ -3,7 +3,9 @@
 use std::time::Duration;
 use std::time::SystemTime;
 
+use aws_config::BehaviorVersion;
 use aws_config::SdkConfig;
+use aws_credential_types::Credentials;
 use aws_sdk_s3::error::SdkError;
 use aws_sdk_s3::operation::get_object::GetObjectError;
 use aws_sdk_s3::presigning::PresigningConfig;
@@ -19,20 +21,14 @@ mod uri;
 
 /// A signer for Amazon S3.
 #[derive(Debug, Clone)]
-pub struct S3FileSigner {
+pub struct AwsFileSigner {
     client: Client,
 }
 
-impl S3FileSigner {
+impl AwsFileSigner {
     /// Create a new signer for Amazon S3.
     #[must_use]
     pub fn new(client: Client) -> Self {
-        Self { client }
-    }
-
-    /// Create a new signer for Amazon S3 from a [`SdkConfig`].
-    pub async fn from_config(config: &SdkConfig) -> Self {
-        let client = Client::new(config);
         Self { client }
     }
 
@@ -42,9 +38,32 @@ impl S3FileSigner {
         let client = Client::new(&config);
         Self { client }
     }
+
+    /// Create a new signer for Amazon S3 from access and secret keys.
+    pub async fn from_keys(
+        access_key_id: impl Into<String>,
+        secret_access_key: impl Into<String>,
+    ) -> Self {
+        let config = aws_config::defaults(BehaviorVersion::latest())
+            .credentials_provider(Credentials::from_keys(
+                access_key_id,
+                secret_access_key,
+                None,
+            ))
+            .load()
+            .await;
+        let client = Client::new(&config);
+        Self { client }
+    }
+
+    /// Create a new signer for Amazon S3 from a [`SdkConfig`].
+    pub async fn from_config(config: &SdkConfig) -> Self {
+        let client = Client::new(config);
+        Self { client }
+    }
 }
 
-impl S3FileSigner {
+impl AwsFileSigner {
     async fn sign_get_request(
         &self,
         uri: &uri::S3Uri,
@@ -97,7 +116,7 @@ impl S3FileSigner {
 }
 
 #[async_trait::async_trait]
-impl CloudFileSigner for S3FileSigner {
+impl CloudFileSigner for AwsFileSigner {
     async fn sign(
         &self,
         path: &str,

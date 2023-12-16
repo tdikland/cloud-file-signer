@@ -14,7 +14,10 @@
 #![warn(rustdoc::missing_crate_level_docs)]
 #![warn(rustdoc::unescaped_backticks)]
 
-use std::time::{Duration, SystemTime};
+use std::{
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 
 pub mod aws;
 pub mod azure;
@@ -30,7 +33,7 @@ use presigned_url::PresignedUrl;
 
 /// A trait for signing URLs for files in a cloud object store.
 #[async_trait::async_trait]
-pub trait CloudFileSigner {
+pub trait CloudFileSigner: Send + Sync {
     /// Sign a URL for a file in a cloud object store. The URL is valid
     /// for the specified duration and grants the specified
     /// permission.
@@ -61,6 +64,36 @@ pub trait CloudFileSigner {
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
         self.sign(path, SystemTime::now(), expiration, Permission::Write)
+            .await
+    }
+}
+
+#[async_trait::async_trait]
+impl<S: CloudFileSigner + ?Sized> CloudFileSigner for Box<S> {
+    async fn sign(
+        &self,
+        path: &str,
+        valid_from: SystemTime,
+        expires_in: Duration,
+        permission: Permission,
+    ) -> Result<PresignedUrl, SignerError> {
+        (**self)
+            .sign(path, valid_from, expires_in, permission)
+            .await
+    }
+}
+
+#[async_trait::async_trait]
+impl<S: CloudFileSigner + ?Sized> CloudFileSigner for Arc<S> {
+    async fn sign(
+        &self,
+        path: &str,
+        valid_from: SystemTime,
+        expires_in: Duration,
+        permission: Permission,
+    ) -> Result<PresignedUrl, SignerError> {
+        (**self)
+            .sign(path, valid_from, expires_in, permission)
             .await
     }
 }
