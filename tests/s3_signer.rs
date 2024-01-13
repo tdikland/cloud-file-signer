@@ -33,7 +33,7 @@ impl<'a> MockS3<'a> {
         let this = Self {
             conf,
             rt: async_runtime,
-            bucket: bucket_name.into(),
+            bucket: bucket_name,
         };
         this.create_bucket();
         this

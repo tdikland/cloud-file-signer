@@ -23,14 +23,14 @@ impl S3Uri {
         let bucket = uri
             .host()
             .ok_or(SignerError::uri_parse_error(
-                format!("Invalid URI: Couldn't extract the S3 bucket name. Format the URI as `s3://<bucket_name>/<key>`. Received: {}", uri.to_string())
+                format!("Invalid URI: Couldn't extract the S3 bucket name. Format the URI as `s3://<bucket_name>/<key>`. Received: {}", uri)
             ))?;
 
         let key = uri
             .path()
             .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error(
-                format!("Invalid URI: Couldn't extract the S3 object key. Format the URI as `s3://<bucket_name>/<key>`. Received: {}", uri.to_string())
+                format!("Invalid URI: Couldn't extract the S3 object key. Format the URI as `s3://<bucket_name>/<key>`. Received: {}", uri)
             ))?;
 
         Ok(Self::new(bucket.to_string(), key.to_string(), None))

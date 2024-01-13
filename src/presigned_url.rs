@@ -161,9 +161,9 @@ impl PresignedUrl {
     ///    SystemTime::now(),
     ///    Duration::from_secs(60),
     /// );
-    /// assert_eq!(presigned_url.to_string(), "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key");
+    /// assert_eq!(presigned_url.into_string(), "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key");
     /// ```
-    pub fn to_string(self) -> String {
+    pub fn into_string(self) -> String {
         self.url
     }
 }
