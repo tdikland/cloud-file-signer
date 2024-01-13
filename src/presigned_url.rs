@@ -30,7 +30,7 @@ impl PresignedUrl {
     /// # Example
     /// ```rust
     /// use std::time::{Duration, SystemTime};
-    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    /// use cloud_file_signer::PresignedUrl;
     ///
     /// // Create a new presigned URL that is valid for 60 seconds starting now.
     /// // Note that the URL is not actually signed (for brevity).
@@ -57,7 +57,7 @@ impl PresignedUrl {
     /// # Example
     /// ```rust
     /// use std::time::{Duration, SystemTime};
-    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    /// use cloud_file_signer::PresignedUrl;
     ///
     /// let presigned_url = PresignedUrl::new(
     ///     "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key",
@@ -66,7 +66,6 @@ impl PresignedUrl {
     /// );
     /// assert_eq!(presigned_url.url(), "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key");
     /// ```
-    #[must_use]
     pub fn url(&self) -> &str {
         &self.url
     }
@@ -76,7 +75,7 @@ impl PresignedUrl {
     /// # Example
     /// ```rust
     /// use std::time::{Duration, SystemTime};
-    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    /// use cloud_file_signer::PresignedUrl;
     ///
     /// let presigned_url = PresignedUrl::new(
     ///    "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key",
@@ -85,7 +84,6 @@ impl PresignedUrl {
     /// );
     /// assert!(presigned_url.valid_from() <= SystemTime::now());
     /// ```
-    #[must_use]
     pub fn valid_from(&self) -> SystemTime {
         self.valid_from
     }
@@ -95,7 +93,7 @@ impl PresignedUrl {
     /// # Example
     /// ```rust
     /// use std::time::{Duration, SystemTime};
-    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    /// use cloud_file_signer::PresignedUrl;
     ///
     /// let now = SystemTime::now();
     /// let presigned_url = PresignedUrl::new(
@@ -105,7 +103,6 @@ impl PresignedUrl {
     /// );
     /// assert_eq!(presigned_url.valid_until(), now + Duration::from_secs(60));
     /// ```
-    #[must_use]
     pub fn valid_until(&self) -> SystemTime {
         self.valid_from + self.valid_for_duration
     }
@@ -115,7 +112,7 @@ impl PresignedUrl {
     /// # Example
     /// ```rust
     /// use std::time::{Duration, SystemTime};
-    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    /// use cloud_file_signer::PresignedUrl;
     /// use std::thread::sleep;
     ///
     /// let presigned_url = PresignedUrl::new(
@@ -127,7 +124,6 @@ impl PresignedUrl {
     /// sleep(Duration::from_secs(2));
     /// assert_eq!(presigned_url.is_expired(), true);
     /// ```
-    #[must_use]
     pub fn is_expired(&self) -> bool {
         SystemTime::now() > self.valid_until()
     }
@@ -137,7 +133,7 @@ impl PresignedUrl {
     /// # Example
     /// ```rust
     /// use std::time::{Duration, SystemTime};
-    /// use cloud_file_signer::presigned_url::PresignedUrl;
+    /// use cloud_file_signer::PresignedUrl;
     /// use std::thread::sleep;
     ///
     /// let presigned_url = PresignedUrl::new(
@@ -149,9 +145,26 @@ impl PresignedUrl {
     /// sleep(Duration::from_secs(2));
     /// assert_eq!(presigned_url.is_valid(), false);
     /// ```
-    #[must_use]
     pub fn is_valid(&self) -> bool {
         !self.is_expired()
+    }
+
+    /// Convert the `PresignedUrl` into a `String`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use std::time::{Duration, SystemTime};
+    /// use cloud_file_signer::PresignedUrl;
+    ///
+    /// let presigned_url = PresignedUrl::new(
+    ///    "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key",
+    ///    SystemTime::now(),
+    ///    Duration::from_secs(60),
+    /// );
+    /// assert_eq!(presigned_url.into_string(), "https://my_bucket.s3.eu-west-1.amazonaws.com/my_key");
+    /// ```
+    pub fn into_string(self) -> String {
+        self.url
     }
 }
 
@@ -164,5 +177,11 @@ impl Display for PresignedUrl {
 impl AsRef<str> for PresignedUrl {
     fn as_ref(&self) -> &str {
         &self.url
+    }
+}
+
+impl From<PresignedUrl> for String {
+    fn from(url: PresignedUrl) -> Self {
+        url.as_ref().to_string()
     }
 }

@@ -10,8 +10,8 @@ services:
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
       - DOCKER_HOST=unix:///var/run/docker.sock
-      - TEST_AWS_ACCESS_KEY_ID=delta-sharing
-      - TEST_AWS_SECRET_ACCESS_KEY=sharing-is-caring
+      - TEST_AWS_ACCESS_KEY_ID=cloud-file-signer-key-id
+      - TEST_AWS_SECRET_ACCESS_KEY=cloud-file-signer-secret-key
       - S3_SKIP_SIGNATURE_VALIDATION=0
 
   azure-mock:

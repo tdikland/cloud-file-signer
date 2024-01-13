@@ -57,6 +57,7 @@ impl AbfsFileSigner {
     async fn sign_read_request(
         &self,
         uri: &AzureUri,
+        valid_from: SystemTime,
         expiration: Duration,
     ) -> Result<PresignedUrl, SignerError> {
         if uri.storage_account() != self.storage_account() {
@@ -65,23 +66,53 @@ impl AbfsFileSigner {
             ));
         }
 
-        let valid_from = SystemTime::now();
+        let start_time = valid_from;
+        let end_time = start_time + expiration;
         let permissions = BlobSasPermissions {
             read: true,
             ..Default::default()
         };
-        let expiry = time::OffsetDateTime::now_utc() + expiration;
 
         let blob_client = self
             .client_builder()
             .blob_client(uri.container(), uri.blob());
         let sas_token = blob_client
-            .shared_access_signature(permissions, expiry)
-            .await
-            .unwrap();
-        let sas_token = sas_token.start(time::OffsetDateTime::now_utc());
+            .shared_access_signature(permissions, end_time.into())
+            .await?;
+        let sas_token = sas_token.start(start_time);
 
-        let signed_url = blob_client.generate_signed_blob_url(&sas_token).unwrap();
+        let signed_url = blob_client.generate_signed_blob_url(&sas_token)?;
+        Ok(PresignedUrl::new(signed_url, valid_from, expiration))
+    }
+
+    async fn sign_write_request(
+        &self,
+        uri: &AzureUri,
+        valid_from: SystemTime,
+        expiration: Duration,
+    ) -> Result<PresignedUrl, SignerError> {
+        if uri.storage_account() != self.storage_account() {
+            return Err(SignerError::other_error(
+                "Storage account name in URI does not match signer",
+            ));
+        }
+
+        let start_time = valid_from;
+        let end_time = start_time + expiration;
+        let permissions = BlobSasPermissions {
+            write: true,
+            ..Default::default()
+        };
+
+        let blob_client = self
+            .client_builder()
+            .blob_client(uri.container(), uri.blob());
+        let sas_token = blob_client
+            .shared_access_signature(permissions, end_time.into())
+            .await?;
+        let sas_token = sas_token.start(start_time);
+
+        let signed_url = blob_client.generate_signed_blob_url(&sas_token)?;
         Ok(PresignedUrl::new(signed_url, valid_from, expiration))
     }
 }
@@ -91,17 +122,25 @@ impl CloudFileSigner for AbfsFileSigner {
     async fn sign(
         &self,
         path: &str,
-        _valid_from: SystemTime,
+        valid_from: SystemTime,
         expiration: Duration,
         permission: Permission,
     ) -> Result<PresignedUrl, SignerError> {
         tracing::info!("signing path: {}", path);
         let azure_uri = path.parse::<AzureUri>()?;
         match permission {
-            Permission::Read => Ok(self.sign_read_request(&azure_uri, expiration).await?),
-            _ => Err(SignerError::permission_not_supported(format!(
-                "permission {permission:?} not supported"
-            ))),
+            Permission::Read => Ok(self
+                .sign_read_request(&azure_uri, valid_from, expiration)
+                .await?),
+            Permission::Write => Ok(self
+                .sign_write_request(&azure_uri, valid_from, expiration)
+                .await?),
         }
+    }
+}
+
+impl From<azure_storage::Error> for SignerError {
+    fn from(e: azure_storage::Error) -> Self {
+        Self::other_error(format!("Azure Storage Error: {}", e))
     }
 }

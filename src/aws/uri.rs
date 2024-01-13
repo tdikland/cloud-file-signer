@@ -22,12 +22,16 @@ impl S3Uri {
     fn from_s3_uri(uri: &Uri) -> Result<Self, SignerError> {
         let bucket = uri
             .host()
-            .ok_or(SignerError::uri_parse_error("Invalid URI: missing bucket"))?;
+            .ok_or(SignerError::uri_parse_error(
+                format!("Invalid URI: Couldn't extract the S3 bucket name. Format the URI as `s3://<bucket_name>/<key>`. Received: {}", uri)
+            ))?;
 
         let key = uri
             .path()
             .strip_prefix('/')
-            .ok_or(SignerError::uri_parse_error("Invalid URI: bad key"))?;
+            .ok_or(SignerError::uri_parse_error(
+                format!("Invalid URI: Couldn't extract the S3 object key. Format the URI as `s3://<bucket_name>/<key>`. Received: {}", uri)
+            ))?;
 
         Ok(Self::new(bucket.to_string(), key.to_string(), None))
     }
@@ -70,12 +74,12 @@ impl S3Uri {
             .path()
             .strip_prefix('/')
             .ok_or(SignerError::uri_parse_error(
-                "Invalid URI: missing bucket and key",
+                "Invalid URI: Couldn't extract bucket name.",
             ))?;
 
-        let (bucket, key) = path
-            .split_once('/')
-            .ok_or(SignerError::uri_parse_error("Invalid URI: missing key"))?;
+        let (bucket, key) = path.split_once('/').ok_or(SignerError::uri_parse_error(
+            "Invalid URI: Couldn't extract key.",
+        ))?;
 
         Ok(Self {
             bucket: bucket.to_string(),
@@ -97,20 +101,27 @@ impl FromStr for S3Uri {
     type Err = SignerError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let uri: Uri = s
-            .parse()
-            .map_err(|e| SignerError::uri_parse_error(format!("Invalid URI: {e}")))?;
+        let uri: Uri = s.parse().map_err(|e| {
+            SignerError::uri_parse_error(format!("Invalid URI. Cause: {e}. Received URI: `{s}`."))
+        })?;
 
         match uri.scheme_str() {
             Some("s3" | "s3a" | "s3n") => Ok(Self::from_s3_uri(&uri)?),
             Some("http" | "https") => Ok(Self::from_url(&uri)?),
-            _ => Err(SignerError::uri_parse_error("Invalid URI scheme")),
+            None => Err(SignerError::uri_parse_error(
+                format!("Invalid URI: missing scheme. The URI should start with `S3`, `S3a`, `S3n`, `http` or `https`. Received URI: `{s}`."))
+            ),
+            Some(unsupported_scheme) => Err(SignerError::uri_parse_error(
+                format!("Unsupported URI scheme. Supported schemas are `S3`, `S3a`, `S3n`, `http` and `https`. Received scheme: `{unsupported_scheme}`."),
+            )),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::error::SignerErrorKind;
+
     use super::*;
 
     #[test]
@@ -194,9 +205,35 @@ mod test {
     }
 
     #[test]
-    fn parse_invalid_scheme() {
+    fn parse_invalid_uri() {
+        let uri = "";
+        let uri_err = S3Uri::from_str(uri).unwrap_err();
+        assert_eq!(uri_err.kind(), SignerErrorKind::CloudUriParseError);
+        assert_eq!(
+            uri_err.message(),
+            "Invalid URI. Cause: empty string. Received URI: ``."
+        );
+    }
+
+    #[test]
+    fn parse_uri_without_scheme() {
+        let uri = "bucket";
+        let uri_err = S3Uri::from_str(uri).unwrap_err();
+        assert_eq!(uri_err.kind(), SignerErrorKind::CloudUriParseError);
+        assert_eq!(
+            uri_err.message(),
+            "Invalid URI: missing scheme. The URI should start with `S3`, `S3a`, `S3n`, `http` or `https`. Received URI: `bucket`."
+        );
+    }
+
+    #[test]
+    fn parse_unsupported_scheme() {
         let uri = "abfss://bucket.s3.us-east-1.amazonaws.com/key";
-        let s3_uri = S3Uri::from_str(uri);
-        assert!(s3_uri.is_err());
+        let uri_err = S3Uri::from_str(uri).unwrap_err();
+        assert_eq!(uri_err.kind(), SignerErrorKind::CloudUriParseError);
+        assert_eq!(
+            uri_err.message(),
+            "Unsupported URI scheme. Supported schemas are `S3`, `S3a`, `S3n`, `http` and `https`. Received scheme: `abfss`."
+        );
     }
 }
