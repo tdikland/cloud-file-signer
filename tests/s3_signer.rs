@@ -20,8 +20,8 @@ impl<'a> MockS3<'a> {
     fn setup(async_runtime: &'a Runtime) -> Self {
         let bucket_name = format!("my-test-bucket-{}", uuid::Uuid::new_v4());
 
-        std::env::set_var("AWS_ACCESS_KEY_ID", "delta-sharing");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "sharing-is-caring");
+        std::env::set_var("AWS_ACCESS_KEY_ID", "cloud-file-signer-key-id");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "cloud-file-signer-secret-key");
         std::env::set_var("AWS_REGION", "us-east-1");
 
         let shared_conf = aws_config::defaults(BehaviorVersion::latest())
